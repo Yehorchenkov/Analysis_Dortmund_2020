@@ -80,7 +80,7 @@ Only include countries that have won at least 1 gold in both summer and winter.
 
 ### Question 4
 
-Write a function that creates a Series called "Points" which is a weighted value where each gold medal (`Gold.2`) counts for 3 points, silver medals (`Silver.2`) for 2 points, and bronze medals (`Bronze.2`) for 1 point.
+Create a data frame which is a weighted value where each gold medal (`Gold.2`) counts for 3 points, silver medals (`Silver.2`) for 2 points, and bronze medals (`Bronze.2`) for 1 point.
 
 *Script should return a data frame of length 146 with 2 columns named "Country and "Points"*
 
@@ -92,7 +92,7 @@ Write a function that creates a Series called "Points" which is a weighted value
 
 For the next set of questions, we will be using census data from the United States Census Bureau. Counties are political and geographic subdivisions of states in the United States. This dataset contains population data for counties and states in the US from 2010 to 2015. [See this document](https://www.dropbox.com/s/a0c2fdkaxokk2ys/CO-EST2015-alldata.pdf?dl=0) for a description of the variable names.
 
-The census dataset (census.csv) should be loaded as census_df. Answer questions using this as appropriate.
+The census dataset [census.csv](https://www.dropbox.com/s/c1b2vqg8i3m1n93/census.csv?dl=0) should be loaded as census_df. Answer questions using this as appropriate.
 
 ### Reading data
 ```{r}
