@@ -24,7 +24,6 @@ msleep <- read_csv(url("https://raw.githubusercontent.com/genomicsclass/dagdata/
 ```
 Data: The msleep (mammals sleep) data set contains the sleeptimes and weights for a set of mammals and is available in the dagdata repository on github. This data set contains `r nrow(msleep)` rows and `r ncol(msleep)` variables.
 
-
 Let's take a look to the dataset
 ```{r}
 
