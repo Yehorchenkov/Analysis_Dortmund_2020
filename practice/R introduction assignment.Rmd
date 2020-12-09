@@ -32,7 +32,18 @@ At first you should do some basic clearning.
 
 
 ```{r}
+library(dplyr)
+library(readr)
+library(tidyr)
+library(stringr)
+olympics<- read.csv("/users/sanket/olympics.csv",skip =1 )
 
+head(olympics)
+
+names(olympics)<-c("Country", "Summer", "Gold", "Silver", "Bronze", "Total", "Winter", "Gold.1", "Silver.1", "Bronze.1", "Total.1", "Games", "Gold.2", "Silver.2", "Bronze.2", "Combined.total")
+
+olympics <- olympics %>% separate(Country,c("Country","ID"),"[(]") %>% mutate(ID=gsub("[)]","",ID))
+  
 ```
 
 ### Question 0 (example)
@@ -41,7 +52,7 @@ What is the first country in df?
 *Script should return a single string value.*
 
 ```{r}
-# olympics$Country[1]
+olympics$Country[1]
 ```
 
 ### Question 1
@@ -51,7 +62,7 @@ Which country has won the most gold medals in summer games?
 *Script should return a single string value.*
 
 ```{r}
-
+olympics$Country[which.max(olympics$Gold[-length(olympics$Country=="Total")])]
 ```
 
 ### Question 2
@@ -62,6 +73,7 @@ Which country had the biggest difference between their summer and winter gold me
 
 ```{r}
 
+olympics$Country[which.max(olympics$Gold[1:length(olympics$Gold)-1]-olympics$Gold.1[1:length(olympics$Gold.1)-1])]
 ```
 
 ### Question 3
@@ -76,7 +88,15 @@ Only include countries that have won at least 1 gold in both summer and winter.
 
 ```{r}
 
+temp<-olympics %>% filter(Gold>=1 & Gold.1>=1)%>%  select(Country,Gold,Gold.1,Gold.2)
+
+temp$Country[which.max((temp$Gold-temp$Gold.1)/temp$Gold.2)]
+  
+  
+
 ```
+
+
 
 ### Question 4
 
@@ -85,7 +105,13 @@ Create a data frame which is a weighted value where each gold medal (`Gold.2`) c
 *Script should return a data frame of length 146 with 2 columns named "Country and "Points"*
 
 ```{r}
-
+point_func<- function()
+{
+  points<-3*olympics$Gold.2+2*olympics$Silver.2+olympics$Bronze.2
+  df<-data.frame(olympics$Country,points)
+  df
+}
+point_func()
 ```
 
 ## Part 2
@@ -96,7 +122,9 @@ The census dataset [census.csv](https://www.dropbox.com/s/c1b2vqg8i3m1n93/census
 
 ### Reading data
 ```{r}
-
+census_df<-read.csv("/Users/Sanket/census.csv")
+glimpse(census_df)
+head(census_df)
 ```
 
 
@@ -106,6 +134,12 @@ Which state has the most counties in it? (hint: consider the sumlevel key carefu
 *Script should return a single string value.*
 
 ```{r}
+df<- data.frame(table(census_df$STNAME))
+colnames(df)[1]<-"STATE"
+colnames(df)[2]<-"COUNT"
+
+df<-arrange(df,desc(COUNT))
+df$STATE[1]
 
 ```
 
@@ -115,6 +149,7 @@ Only looking at the three most populous counties for each state, what are the th
 *Script should return a vector of string values.*
 
 ```{r}
+census_df$STNAME[rank(-census_df$CENSUS2010POP)<4]
 
 ```
 
@@ -127,6 +162,12 @@ e.g. If County Population in the 5 year period is 100, 120, 80, 105, 100, 130, t
 *Script should return a single string value.*
 
 ```{r}
+pop10_15<- census_df %>% select(POPESTIMATE2010,POPESTIMATE2011,POPESTIMATE2012,POPESTIMATE2013,POPESTIMATE2014,POPESTIMATE2015)
+
+min10_15<-apply(pop10_15, 1,min)
+max10_15<-apply(pop10_15, 1,max)
+
+census_df$CTYNAME[which.max(max10_15 -min10_15)]
 
 ```
 
@@ -139,7 +180,7 @@ Create a query that finds the counties that belong to regions 1 or 2, whose name
 *Script function should return a 5x2 DataFrame with the columns "STNAME", "CTYNAME".*
 
 ```{r}
-
+census_df %>% filter(REGION==1 | REGION==2)  %>% filter(POPESTIMATE2015 > POPESTIMATE2014 & grepl("Washington",CTYNAME)) %>% select(STNAME,CTYNAME)
 ```
 
 
