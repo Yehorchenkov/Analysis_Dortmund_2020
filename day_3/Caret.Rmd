@@ -1,0 +1,241 @@
+
+---
+title: Caret package
+author: "Oleksii Yehorchenkov"
+date: "30 11 2020"
+output: html_document
+---
+
+This tutorial is based on Coursera course [Practical Machine Learning](https://www.coursera.org/learn/practical-machine-learning/home/welcome)
+And [Introduction to Data Science](https://rafalab.github.io/dsbook/) by Rafael A. Irizarry
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.height = 12)
+```
+
+# The Caret R Package
+
+http://topepo.github.io/caret/index.html
+
+## Caret functionality
+
+* Some preprocessing (cleaning)
+  * preProcess
+* Data splitting
+  * createDataPartition
+  * createResample
+  * createTimeSlices
+* Training/testing functions
+  * train
+  * predict
+* Model comparison
+  * confusionMatrix
+  
+## Machine learning algorithms in R
+
+* Linear discriminant analysis
+* Regression
+* Naive Bayes
+* Support vector machines
+* Classification and regression trees
+* Random forests
+* Boosting
+* etc.
+
+## SPAM Example: Data splitting
+
+```{r loadPackage}
+library(caret); library(kernlab); data(spam)
+inTrain <- createDataPartition(y=spam$type,
+                              p=0.75, list=FALSE)
+training <- spam[inTrain,]
+testing <- spam[-inTrain,]
+dim(training); dim(testing)
+```
+
+## SPAM Example: Fit a model
+
+```{r training}
+set.seed(32343)
+modelFit <- train(type ~.,data=training, method="glm")
+modelFit
+```
+## SPAM Example: Final model
+
+```{r finalModel}
+modelFit <- train(type ~.,data=training, method="glm")
+modelFit$finalModel
+```
+
+## SPAM Example: Prediction
+
+```{r predictions}
+predictions <- predict(modelFit,newdata=testing)
+head(predictions, 20)
+```
+
+```{r}
+length(predictions)
+```
+
+## SPAM Example: Confusion Matrix
+
+```{r confusion}
+confusionMatrix(predictions,testing$type)
+```
+Just accuracy metric from confusion matrix
+
+```{r}
+confusionMatrix(predictions,testing$type)$overall[["Accuracy"]]
+```
+# Caret options
+
+## Train options
+
+```
+# Default S3 method:
+train(
+  x,
+  y,
+  method = "rf",
+  preProcess = NULL,
+  ...,
+  weights = NULL,
+  metric = ifelse(is.factor(y), "Accuracy", "RMSE"),
+  maximize = ifelse(metric %in% c("RMSE", "logLoss", "MAE"), FALSE, TRUE),
+  trControl = trainControl(),
+  tuneGrid = NULL,
+  tuneLength = ifelse(trControl$method == "none", 1, 3)
+)
+```
+
+## Metric options
+
+__Continous outcomes__:
+  * _RMSE_ = Root mean squared error
+  * _RSquared_ = $R^2$ from regression models
+
+__Categorical outcomes__:
+  * _Accuracy_ = Fraction correct
+  * _Kappa_ = A measure of [concordance](http://en.wikipedia.org/wiki/Cohen%27s_kappa)
+
+## trainControl
+
+```{r}
+args(trainControl)
+```
+
+## trainControl resampling
+
+* _method_
+  * _boot_ = bootstrapping
+  * _boot632_ = bootstrapping with adjustment
+  * _cv_ = cross validation
+  * _repeatedcv_ = repeated cross validation
+  * _LOOCV_ = leave one out cross validation
+* _number_
+  * For boot/cross validation
+  * Number of subsamples to take
+* _repeats_
+  * Number of times to repeate subsampling
+  * If big this can _slow things down_
+
+## Setting the seed
+
+* It is often useful to set an overall seed
+* You can also set a seed for each resample
+* Seeding each resample is useful for parallel fits
+
+```{r}
+set.seed(123)
+```
+
+## train control example
+
+When an algorithm includes a tuning parameter, train automatically uses cross validation to decide among a few default values. To find out what parameter or parameters are
+optimized, you can read the [manual](https://topepo.github.io/caret/available-models.html) or use a quick lookup like this:
+
+```{r}
+modelLookup("rpart")
+```
+
+By default, the cross validation is performed by taking 25 bootstrap samples comprised of 25% of the observations. By default the number of possible cp values is 3, but we can specify this number by setting parameter `tuneLength`.
+
+```{r}
+train_rpart <- train(type ~ ., data = training, 
+                     method = "rpart",
+                     tuneLength = 10)
+
+ggplot(train_rpart, highlight = TRUE)
+```
+
+Here, we present an example where we try out 10 values between 0.005 and 0.5. To do this with caret, we need to define a column named _cp_, so we use this: `data.frame(cp = seq(0.005, 0.5, 0.05))`.
+
+```{r}
+train_rpart <- train(type ~ ., data = training, 
+                     method = "rpart",
+                     tuneGrid = 
+                       data.frame(cp = seq(0.005, 0.1, 0.01)))
+
+ggplot(train_rpart, highlight = TRUE)
+```
+
+If we want to change how we perform cross validation, we can use the trainControl function. We can make the code above go a bit faster by using, for example, 10-fold cross validation. This means we have 10 samples using 10% of the observations each. We accomplish this using the following code:
+
+```{r}
+control <- trainControl(method = "cv", number = 10, p = .9)
+
+train_rpart <- train(type ~ ., data = training, 
+                     method = "rpart",
+                     trControl = control,
+                     tuneLength = 10)
+
+ggplot(train_rpart, highlight = TRUE)
+
+```
+
+We can build a tree
+
+```{r}
+library(rattle)
+fancyRpartPlot(train_rpart$finalModel)
+
+```
+
+## Preprocessing
+
+For basic preprocessing we can use argument `preProcess` in `train` function
+
+```{r}
+train_rpart <- train(type ~ ., data = training, 
+                     method = "rpart",
+                     trControl = control,
+                     preProcess = c("center","scale"))
+train_rpart
+
+```
+Also we can use preprocessing with PCA. We will capture 80% of variance. Default value is 95%.
+
+```{r}
+training_pca <- preProcess(training, method = "pca", 
+                           thresh = 0.8)
+
+training_pca
+```
+Instead of 57 columns we need just 35 now.
+
+Let's have a look on a new data
+
+```{r}
+head(predict(training_pca, training))
+```
+
+We can use PCA preprocessing with `train` function
+
+```{r}
+train_rpart <- train(type ~ ., data = training, 
+                     method = "rpart",
+                     trControl = control,
+                     preProcess = "pca")
+train_rpart
+```
