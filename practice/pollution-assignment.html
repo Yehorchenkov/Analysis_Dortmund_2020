@@ -571,10 +571,10 @@ complete(&quot;~/R/Analysis_Dortmund_2020/data/specdata/&quot;,1)</code></pre>
 <pre class="r"><code>corr &lt;- function(directory, threshold = 0) {
     # &#39;directory&#39; is character vector of length 1 
     # indicating the location of the csv file.
-    # directory&lt;-&quot;~/R/Analysis_Dortmund_2020/data/specdata/&quot;
-    # threshold&lt;-2
+    
     file_list&lt;-list.files(path=directory,pattern = &quot;.csv&quot;,full.names = TRUE)
     df&lt;-complete(directory)
+    
     # &#39;threshold&#39; is numeric vector of length 1 indicating
     # the number of completely observed observations (on all
     # variables) required to compute the correlation between

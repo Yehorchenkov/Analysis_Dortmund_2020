@@ -167,10 +167,10 @@ Write a function that takes a directory of data files and a threshold for comple
 corr <- function(directory, threshold = 0) {
     # 'directory' is character vector of length 1 
     # indicating the location of the csv file.
-    # directory<-"~/R/Analysis_Dortmund_2020/data/specdata/"
-    # threshold<-2
+    
     file_list<-list.files(path=directory,pattern = ".csv",full.names = TRUE)
     df<-complete(directory)
+    
     # 'threshold' is numeric vector of length 1 indicating
     # the number of completely observed observations (on all
     # variables) required to compute the correlation between
@@ -202,6 +202,7 @@ cr <- corr("~/R/Analysis_Dortmund_2020/data/specdata/", 5000)
 
 head(cr)
 summary(cr)
+
 ```
 
 For this function you will need to use the 'cor' function in R which calculates the correlation between two vectors. Please read the help page for this function via '?cor' and make sure that you know how to use it.
