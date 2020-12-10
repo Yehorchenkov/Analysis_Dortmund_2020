@@ -30,21 +30,43 @@ For this programming assignment you will need to unzip this file and create the 
 Write a function named 'pollutantmean' that calculates the mean of a pollutant (sulfate or nitrate) across a specified list of monitors. The function 'pollutantmean' takes three arguments: 'directory', 'pollutant', and 'id'. Given a vector monitor ID numbers, 'pollutantmean' reads that monitors' particulate matter data from the directory specified in the 'directory' argument and returns the mean of the pollutant across all of the monitors, ignoring any missing values coded as NA. A prototype of the function is as follows
 
 ```{r}
-pollutant <- function(directory, pollutant, id = 1:332) {
+library(readr)
+library(dplyr)
+library(tidyr)
+
+pollutant_mean <- function(directory, pollutant, id=1:332) {
     # 'directory' is character vector of length 1 
     # indicating the location of the csv file.
+    
+    file_list<-list.files(path=directory,pattern = ".csv",full.names = TRUE)
+    
+    sum<-numeric()
     
     # 'pollutant' is character vector of length 1 
     # indicating the name of the pollutant for which we will
     # calculate the mean; either "sulfate" or "nitrate"
     
+    for(i in id)
+    {
+        data<-read.csv(file_list[i])
+       
+        head(data)
+        sum<-c(sum,data[[pollutant]])
+
+    
+    }
     # 'id' is an integer vector indicating the monitor ID
     # numbers to be used
     
     # return the mean of the pollutant across all monitor list
     # in the 'id' vector (ignoring NA values)
     # NOTE: do not round the result!
+    mean(sum,na.rm=TRUE)
 }
+
+pollutant_mean("~/R/Analysis_Dortmund_2020/data/specdata/","sulfate",1:10)
+pollutant_mean("~/R/Analysis_Dortmund_2020/data/specdata/","sulfate",55)
+pollutant_mean("~/R/Analysis_Dortmund_2020/data/specdata/","nitrate")
 ```
 
 Output examples:
@@ -75,8 +97,17 @@ complete <- function(directory, id = 1:332) {
     # 'directory' is character vector of length 1 
     # indicating the location of the csv file.
     
+    file_list<-list.files(path=directory,pattern = ".csv",full.names = TRUE)
     # 'id' is an integer vector indicating the monitor ID
     # numbers to be used
+    
+    nobs<-numeric()
+    
+    for(i in id)
+    {
+        data<-read.csv(file_list[i])
+        nobs<-c(nobs,sum(complete.cases(data)))
+    }
     
     # Returns a data frame of the form:
     # id    nobs
@@ -85,7 +116,11 @@ complete <- function(directory, id = 1:332) {
     # ...
     # where 'id' is the monitor number and 'nobs' is the
     # number of complete cases
+    data.frame(id,nobs)
 }
+complete("~/R/Analysis_Dortmund_2020/data/specdata/",1)
+complete("~/R/Analysis_Dortmund_2020/data/specdata/",c(2, 4, 8, 10, 12))
+complete("~/R/Analysis_Dortmund_2020/data/specdata/",50:60)
 ```
 
 Output examples:
@@ -132,15 +167,41 @@ Write a function that takes a directory of data files and a threshold for comple
 corr <- function(directory, threshold = 0) {
     # 'directory' is character vector of length 1 
     # indicating the location of the csv file.
-    
+    # directory<-"~/R/Analysis_Dortmund_2020/data/specdata/"
+    # threshold<-2
+    file_list<-list.files(path=directory,pattern = ".csv",full.names = TRUE)
+    df<-complete(directory)
     # 'threshold' is numeric vector of length 1 indicating
     # the number of completely observed observations (on all
     # variables) required to compute the correlation between
     # nitrate and sulfate; the default is 0
-    
+    ids<-df[df["nobs"] > threshold, ]$id
+    d<-numeric()
+    for(i in ids)
+    {
+        data<-read.csv(file_list[i])
+        df2<-data[complete.cases(data),]
+        d<-c(d,cor(df2[,"sulfate"],df2[,"nitrate"]))
+    }
     # Return a numeric vector of correlations
     # NOTE: do not round the result!
+    
+    d
 }
+cr <- corr("~/R/Analysis_Dortmund_2020/data/specdata/", 150)
+
+head(cr)
+summary(cr)
+
+cr <- corr("~/R/Analysis_Dortmund_2020/data/specdata/", 400)
+
+head(cr)
+summary(cr)
+
+cr <- corr("~/R/Analysis_Dortmund_2020/data/specdata/", 5000)
+
+head(cr)
+summary(cr)
 ```
 
 For this function you will need to use the 'cor' function in R which calculates the correlation between two vectors. Please read the help page for this function via '?cor' and make sure that you know how to use it.

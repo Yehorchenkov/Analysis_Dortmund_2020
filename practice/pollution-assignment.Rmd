@@ -1,0 +1,243 @@
+---
+title: "Pollution assignment"
+author: "Oleksii Yehorchenkov"
+date: "30 11 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+This assignment is based on materials from Coursera course [R Programming](https://www.coursera.org/learn/r-programming/home/welcome)
+
+## Introduction
+
+For this assignment you will write three functions that are meant to interact with dataset that accompanies this assignment. The dataset is contained in a zip file [specdata.zip](https://www.dropbox.com/s/i9wi47oyhfb7qlh/rprog_data_specdata.zip?dl=0)
+
+## Data
+
+The zip file contains 332 comma-separated-value (CSV) files containing pollution monitoring data for fine particulate matter (PM) air pollution at 332 locations in the United States. Each file contains data from a single monitor and the ID number for each monitor is contained in the file name. For example, data for monitor 200 is contained in the file "200.csv". Each file contains three variables:
+
+- Date: the date of the observation in YYYY-MM-DD format (year-month-day)
+- sulfate: the level of sulfate PM in the air on that date (measured in micrograms per cubic meter)
+- nitrate: the level of nitrate PM in the air on that date (measured in micrograms per cubic meter)
+
+For this programming assignment you will need to unzip this file and create the directory 'specdata'. Once you have unzipped the zip file, do not make any modifications to the files in the 'specdata' directory. In each file you'll notice that there are many days where either sulfate or nitrate (or both) are missing (coded as NA). This is common with air pollution monitoring data in the United States.
+
+## Part 1
+
+Write a function named 'pollutantmean' that calculates the mean of a pollutant (sulfate or nitrate) across a specified list of monitors. The function 'pollutantmean' takes three arguments: 'directory', 'pollutant', and 'id'. Given a vector monitor ID numbers, 'pollutantmean' reads that monitors' particulate matter data from the directory specified in the 'directory' argument and returns the mean of the pollutant across all of the monitors, ignoring any missing values coded as NA. A prototype of the function is as follows
+
+```{r}
+library(readr)
+library(dplyr)
+library(tidyr)
+
+pollutant_mean <- function(directory, pollutant, id=1:332) {
+    # 'directory' is character vector of length 1 
+    # indicating the location of the csv file.
+    
+    file_list<-list.files(path=directory,pattern = ".csv",full.names = TRUE)
+    
+    sum<-numeric()
+    
+    # 'pollutant' is character vector of length 1 
+    # indicating the name of the pollutant for which we will
+    # calculate the mean; either "sulfate" or "nitrate"
+    
+    for(i in id)
+    {
+        data<-read.csv(file_list[i])
+       
+        head(data)
+        sum<-c(sum,data[[pollutant]])
+
+    
+    }
+    # 'id' is an integer vector indicating the monitor ID
+    # numbers to be used
+    
+    # return the mean of the pollutant across all monitor list
+    # in the 'id' vector (ignoring NA values)
+    # NOTE: do not round the result!
+    mean(sum,na.rm=TRUE)
+}
+
+pollutant_mean("~/R/Analysis_Dortmund_2020/data/specdata/","sulfate",1:10)
+pollutant_mean("~/R/Analysis_Dortmund_2020/data/specdata/","sulfate",55)
+pollutant_mean("~/R/Analysis_Dortmund_2020/data/specdata/","nitrate")
+```
+
+Output examples:
+```{r}
+#pmean("specdata", "sulfate", 1:10)
+
+## [1] 4.064128
+```
+
+```{r}
+#pmean("specdata", "sulfate", 55)
+
+## [1] 3.587319
+```
+
+```{r}
+#pmean("specdata", "nitrate")
+
+## [1] 1.702932
+```
+
+## Part 2
+
+Write a function that reads a directory full of files and reports the number of completely observed cases in each data file. The function should return a data frame where the first column is the name of the file and the second column is the number of complete cases. A prototype of this function follows
+
+```{r}
+complete <- function(directory, id = 1:332) {
+    # 'directory' is character vector of length 1 
+    # indicating the location of the csv file.
+    
+    file_list<-list.files(path=directory,pattern = ".csv",full.names = TRUE)
+    # 'id' is an integer vector indicating the monitor ID
+    # numbers to be used
+    
+    nobs<-numeric()
+    
+    for(i in id)
+    {
+        data<-read.csv(file_list[i])
+        nobs<-c(nobs,sum(complete.cases(data)))
+    }
+    
+    # Returns a data frame of the form:
+    # id    nobs
+    # 1     117
+    # 2     1041
+    # ...
+    # where 'id' is the monitor number and 'nobs' is the
+    # number of complete cases
+    data.frame(id,nobs)
+}
+complete("~/R/Analysis_Dortmund_2020/data/specdata/",1)
+complete("~/R/Analysis_Dortmund_2020/data/specdata/",c(2, 4, 8, 10, 12))
+complete("~/R/Analysis_Dortmund_2020/data/specdata/",50:60)
+```
+
+Output examples:
+```{r}
+#complete("specdata", 1)
+
+##   id nobs
+## 1  1  117
+```
+
+```{r}
+#complete("specdata", c(2, 4, 8, 10, 12))
+
+##   id nobs
+## 1  2 1041
+## 2  4  474
+## 3  8  192
+## 4 10  148
+## 5 12   96
+```
+
+```{r}
+#complete("specdata", 50:60)
+
+##   id nobs
+## 1  50  459
+## 2  51  193
+## 3  52  812
+## 4  53  342
+## 5  54  219
+## 6  55  372
+## 7  56  642
+## 8  57  452
+## 9  58  391
+## 10 59  445
+## 11 60  448
+```
+
+## Part 3
+
+Write a function that takes a directory of data files and a threshold for complete cases and calculates the correlation between sulfate and nitrate for monitor locations where the number of completely observed cases (on all variables) is greater than the threshold. The function should return a vector of correlations for the monitors that meet the threshold requirement. If no monitors meet the threshold requirement, then the function should return a numeric vector of length 0. A prototype of this function follows
+
+```{r}
+corr <- function(directory, threshold = 0) {
+    # 'directory' is character vector of length 1 
+    # indicating the location of the csv file.
+    # directory<-"~/R/Analysis_Dortmund_2020/data/specdata/"
+    # threshold<-2
+    file_list<-list.files(path=directory,pattern = ".csv",full.names = TRUE)
+    df<-complete(directory)
+    # 'threshold' is numeric vector of length 1 indicating
+    # the number of completely observed observations (on all
+    # variables) required to compute the correlation between
+    # nitrate and sulfate; the default is 0
+    ids<-df[df["nobs"] > threshold, ]$id
+    d<-numeric()
+    for(i in ids)
+    {
+        data<-read.csv(file_list[i])
+        df2<-data[complete.cases(data),]
+        d<-c(d,cor(df2[,"sulfate"],df2[,"nitrate"]))
+    }
+    # Return a numeric vector of correlations
+    # NOTE: do not round the result!
+    
+    d
+}
+cr <- corr("~/R/Analysis_Dortmund_2020/data/specdata/", 150)
+
+head(cr)
+summary(cr)
+
+cr <- corr("~/R/Analysis_Dortmund_2020/data/specdata/", 400)
+
+head(cr)
+summary(cr)
+
+cr <- corr("~/R/Analysis_Dortmund_2020/data/specdata/", 5000)
+
+head(cr)
+summary(cr)
+```
+
+For this function you will need to use the 'cor' function in R which calculates the correlation between two vectors. Please read the help page for this function via '?cor' and make sure that you know how to use it.
+
+Output examples:
+
+```{r}
+#cr <- corr("specdata", 150)
+
+#head(cr); summary(cr)
+
+## [1] -0.01895754 -0.14051254 -0.04389737 -0.06815956 -0.12350667 -0.07588814
+##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+## -0.21060 -0.04999  0.09463  0.12530  0.26840  0.76310
+```
+
+```{r}
+#cr <- corr("specdata", 400)
+
+#head(cr); summary(cr)
+
+## [1] -0.01895754 -0.04389737 -0.06815956 -0.07588814  0.76312884 -0.15782860
+##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+## -0.17620 -0.03109  0.10020  0.13970  0.26850  0.76310
+```
+
+```{r}
+#cr <- corr("specdata", 5000)
+
+#head(cr); summary(cr) ; length(cr)
+
+## NULL
+## Length  Class   Mode 
+##      0   NULL   NULL
+## [1] 0
+```
+
+
+The function that you write should be able to approximately match this output. **Note that because of how R rounds and presents floating point numbers, the output you generate may differ slightly from the example output**. 
